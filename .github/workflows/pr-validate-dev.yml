@@ -38,7 +38,9 @@ jobs:
 
       - name: Install SGD
         run: |
-          sf plugins install sfdx-git-delta
+          echo y | sfdx plugins:install sfdx-git-delta
+          sfdx sgd:source:delta --to "HEAD" --from "HEAD^"  --ignore ignorefile --output "."
+          cat package/package.xml
 
       - name: Check install
         run: |
