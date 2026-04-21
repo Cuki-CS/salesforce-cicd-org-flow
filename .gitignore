@@ -1,11 +1,20 @@
-#Salesforce CLI files
-.sf
-.sfdx
-manifest
-certs
-.forceignore
-
-#Logs & Other files
-scripts/*
-.log
+node_modules/
+.env
+coverage/
+.nyc_output/
 .DS_Store
+*.log
+
+# Salesforce auth / temp
+.jwt/
+server.key
+server.crt
+.auth/
+
+# OS / IDE
+.vscode/
+.idea/
+
+# Build
+dist/
+tmp/
