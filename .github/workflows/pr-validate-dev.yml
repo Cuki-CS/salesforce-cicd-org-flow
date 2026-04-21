@@ -38,7 +38,7 @@ jobs:
 
       - name: Install SGD
         run: |
-          npm install --global sfdx-git-delta
+          sf plugins install sfdx-git-delta
 
       - name: Check install
         run: |
