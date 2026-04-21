@@ -71,39 +71,15 @@ jobs:
             --instance-url "${{ secrets.SF_INSTANCE_URL_DEV }}" \
             --alias uat-org
 
-      - name: Generate Delta Package
-      run: |
-        # Get the base branch (main/master)
-        BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
-        HEAD_BRANCH="${{ github.event.pull_request.head.sha }}"
-        
-        echo "Generating delta package between $BASE_BRANCH and $HEAD_BRANCH"
-        
-        # Create delta directory
-        mkdir -p delta
-        
-        # Generate package.xml for changed components
-        sf sgd:source:delta \
-          --to $HEAD_BRANCH \
-          --from origin/$BASE_BRANCH \
-          --output-dir delta \
-          --generate-delta
-
-        # Display generated package.xml
-        echo "Generated package.xml:"
-        if [ -f "delta/package/package.xml" ]; then
-          cat delta/package/package.xml
-        else
-          echo "No package.xml generated"
-        fi
-        
-        # Check if there are any changes to deploy
-        if [ ! -f "delta/package/package.xml" ] || [ ! -s "delta/package/package.xml" ]; then
-          echo "No metadata changes detected"
-          echo "SKIP_DEPLOYMENT=true" >> $GITHUB_ENV
-        else
-          echo "SKIP_DEPLOYMENT=false" >> $GITHUB_ENV
-        fi
+      - name: Generate delta package
+        shell: bash
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          sf sgd source delta \
+            --from "origin/${{ github.base_ref }}" \
+            --to "${{ github.event.pull_request.head.sha }}" \
+            --output-dir delta \
+            --generate-delta
 
       - name: Validate delta deployment to UAT
         shell: bash
