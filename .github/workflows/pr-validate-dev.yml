@@ -74,6 +74,7 @@ jobs:
       - name: Generate delta package
         shell: bash
         run: |
+          mkdir -p delta
           git fetch origin "${{ github.base_ref }}" --depth=1
           sf sgd source delta \
             --from "origin/${{ github.base_ref }}" \
