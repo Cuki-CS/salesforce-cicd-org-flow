@@ -3,7 +3,7 @@ name: Deploy UAT
 on:
   push:
     branches:
-      - uat
+      - dev
       - hotfix/**
   workflow_dispatch:
 
@@ -34,10 +34,18 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Salesforce CLI and SGD
+      - name: Install Salesforce CLI
         run: |
           npm install --global @salesforce/cli
-          npm install --global sfdx-git-delta@5.52.0
+          
+      - name: Install SGD
+        run: |
+          echo y | sfdx plugins:install sfdx-git-delta
+          sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output "."
+          cat package/package.xml
+          
+      - name: Check install
+        run: |
           sf --version
           sf plugins
 
@@ -53,7 +61,7 @@ jobs:
       - name: Prepare JWT key
         shell: bash
         run: |
-          printf '%s' "${{ secrets.SF_JWT_KEY }}" > server.key
+          printf '%s' "${{ secrets.SF_JWT_KEY_UAT }}" > server.key
           chmod 600 server.key
 
       - name: Authenticate to UAT
@@ -68,6 +76,7 @@ jobs:
       - name: Generate delta package
         shell: bash
         run: |
+          mkdir -p delta
           sf sgd source delta \
             --from "${{ github.event.before }}" \
             --to "${{ github.sha }}" \

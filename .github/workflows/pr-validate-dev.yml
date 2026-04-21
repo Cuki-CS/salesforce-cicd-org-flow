@@ -32,10 +32,18 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Salesforce CLI and SGD
+      - name: Install Salesforce CLI
         run: |
           npm install --global @salesforce/cli
-          npm install --global sfdx-git-delta@5.52.0
+
+      - name: Install SGD
+        run: |
+          echo y | sfdx plugins:install sfdx-git-delta
+          sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output "."
+          cat package/package.xml
+
+      - name: Check install
+        run: |
           sf --version
           sf plugins
 
@@ -66,6 +74,7 @@ jobs:
       - name: Generate delta package
         shell: bash
         run: |
+          mkdir -p delta
           git fetch origin "${{ github.base_ref }}" --depth=1
           sf sgd source delta \
             --from "origin/${{ github.base_ref }}" \
