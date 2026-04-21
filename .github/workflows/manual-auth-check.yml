@@ -39,10 +39,10 @@ jobs:
       - name: Authenticate
         run: |
           sf org login jwt \
-            --username "${{ secrets.SF_USERNAME }}" \
-            --client-id "${{ secrets.SF_CLIENT_ID }}" \
+            --username "${{ secrets.SF_USERNAME_DEV }}" \
+            --client-id "${{ secrets.SF_CLIENT_ID_DEV }}" \
             --jwt-key-file server.key \
-            --instance-url "${{ secrets.SF_INSTANCE_URL }}" \
+            --instance-url "${{ secrets.SF_INSTANCE_URL_DEV }}" \
             --alias auth-check-org
 
       - name: Show authenticated org
