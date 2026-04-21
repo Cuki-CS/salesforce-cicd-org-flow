@@ -1,0 +1,94 @@
+name: PR Validate to UAT
+
+on:
+  pull_request:
+    branches:
+      - dev
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: pr-validate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PMD_VERSION: '7.0.0'
+
+jobs:
+  validate-pr-to-dev:
+    runs-on: ubuntu-latest
+    environment: uat
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Salesforce CLI and SGD
+        run: |
+          npm install --global @salesforce/cli
+          npm install --global sfdx-git-delta@5.52.0
+          sf --version
+          sf plugins
+
+      - name: Run PMD
+        uses: pmd/pmd-github-action@v2
+        with:
+          version: ${{ env.PMD_VERSION }}
+          sourcePath: force-app/main/default
+          rulesets: config/pmd/apex-ruleset.xml
+          uploadSarifReport: true
+          createGitHubAnnotations: true
+
+      - name: Prepare JWT key
+        shell: bash
+        run: |
+          printf '%s' "${{ secrets.SF_JWT_KEY }}" > server.key
+          chmod 600 server.key
+
+      - name: Authenticate to UAT
+        run: |
+          sf org login jwt \
+            --username "${{ secrets.SF_USERNAME }}" \
+            --client-id "${{ secrets.SF_CLIENT_ID }}" \
+            --jwt-key-file server.key \
+            --instance-url "${{ secrets.SF_INSTANCE_URL }}" \
+            --alias uat-org
+
+      - name: Generate delta package
+        shell: bash
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          sf sgd source delta \
+            --from "origin/${{ github.base_ref }}" \
+            --to "${{ github.event.pull_request.head.sha }}" \
+            --output-dir delta \
+            --generate-delta
+
+      - name: Validate delta deployment to UAT
+        shell: bash
+        run: |
+          if [ -f delta/package/package.xml ]; then
+            EXTRA_ARGS=()
+            if [ -f delta/destructiveChanges/destructiveChanges.xml ]; then
+              EXTRA_ARGS+=(--post-destructive-changes delta/destructiveChanges/destructiveChanges.xml)
+            fi
+
+            sf project deploy start \
+              --target-org uat-org \
+              --manifest delta/package/package.xml \
+              --dry-run \
+              --test-level RunLocalTests \
+              --wait 60 \
+              "${EXTRA_ARGS[@]}"
+          else
+            echo 'No delta package generated. Skipping deployment validation.'
+          fi
