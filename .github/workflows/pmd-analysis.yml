@@ -1,10 +1,9 @@
-# .github/workflows/pmd-analysis.yml
-name: PMD Check
-on: [pull_request]
-jobs:
- pmd:
- runs-on: ubuntu-latest
- steps:
- - uses: actions/checkout@v4
- - name: Placeholder Step
- run: echo "PMD check will go here"
+- name: Run PMD
+  uses: pmd/pmd-github-action@v2
+  with:
+    version: '7.0.0'
+    sourcePath: 'force-app/main/default'
+    rulesets: 'config/pmd/apex-ruleset.xml'
+    analyzeModifiedFilesOnly: false
+    uploadSarifReport: true
+    createGitHubAnnotations: true
