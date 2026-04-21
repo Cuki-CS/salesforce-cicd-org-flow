@@ -9,6 +9,11 @@
 deploy-options.json
 scripts
 
+.eslintignore
+.forceignore
+.vscode
+jest.config.js
+
 # LWC VSCode autocomplete
 **/lwc/jsconfig.json
 
