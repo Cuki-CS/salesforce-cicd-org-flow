@@ -51,7 +51,7 @@ jobs:
       - name: Prepare JWT key
         shell: bash
         run: |
-          printf '%s' "${{ secrets.SF_JWT_KEY }}" > server.key
+          printf '%s' "${{ secrets.SF_JWT_KEY_DEV }}" > server.key
           chmod 600 server.key
 
       - name: Authenticate to UAT
